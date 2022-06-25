@@ -1,0 +1,340 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>2048</title>
+    <style>
+        #table {
+            border-collapse: collapse;
+            user-select: none;
+        }
+
+        #table td {
+            border: 10px solid #bbada0;
+            width: 116px;
+            height: 128px;
+            font-size: 50px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #score {
+            user-select: none;
+        }
+
+        .color-2 {
+            background-color: #eee4da;
+            color: #776e65;
+        }
+
+        .color-4 {
+            background-color: #eee1c9;
+            color: #776e65;
+        }
+
+        .color-8 {
+            background-color: #f3b27a;
+            color: 'white';
+        }
+
+        .color-16 {
+            background-color: #f69664;
+            color: 'white';
+        }
+
+        .color-32 {
+            background-color: #f77c5f;
+            color: 'white';
+        }
+
+        .color-64 {
+            background-color: #f75f3b;
+            color: 'white';
+        }
+
+        .color-128 {
+            background-color: #edd073;
+            color: #776e65;
+        }
+
+        .color-256 {
+            background-color: #edcc62;
+            color: #776e65;
+        }
+
+        .color-512 {
+            background-color: #edc950;
+            color: #776e65;
+        }
+
+        .color-1024 {
+            background-color: #edc53f;
+            color: #776e65;
+        }
+
+        .color-2048 {
+            background-color: #edc22e;
+            color: #776e65;
+        }
+
+        .return {
+            border: none;
+            border-radius: 1rem;
+            width: 100px;
+            height: 100px;
+            background-color: #f69664;
+            color: white;
+            margin: 10px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="button">남은기회: 6</button>
+    <table id="table"></table>
+    <div id="score">0</div>
+    <script>
+        const $table = document.querySelector('#table');
+        const $score = document.querySelector('#score');
+        const $button = document.querySelector('#button');
+        let data = [];
+        let history = [];
+        let clickable = true;
+
+        function gameStart(){
+            const $fragment = document.createDocumentFragment();
+            [1, 2, 3, 4].forEach(() => {
+                const row = [];
+                data.push(row);
+                const $tr = document.createElement('tr');
+                [1, 2, 3, 4].forEach(() => {
+                    row.push(0);
+                    const $td = document.createElement('td');
+                    $tr.append($td);
+                });
+                $fragment.append($tr);
+            });
+            $table.append($fragment);
+            put2ToRandomCell();
+            draw();
+        }
+
+        // data = [[0,0,0,0], [0,0,0,0], [0,0,0,0], ]
+
+        function put2ToRandomCell(){
+            let rowIndex = Math.floor(Math.random() * 4);
+            let cellIndex = Math.floor(Math.random() * 4);
+            data.forEach((rows, i) => {
+                rows.forEach((cell, j) => {
+                    if(data[rowIndex][cellIndex] === 0){
+                        data[rowIndex][cellIndex] = 2;
+                    }
+                })
+            })
+            
+        };
+
+        function draw(){
+            data.forEach((rows, i) => {
+                rows.forEach((cells, j) => {
+                    const cellData = $table.children[i].children[j];
+                    if(cells > 0){
+                        cellData.textContent = cells;
+                        cellData.className = 'color-' + cells;
+                    }else{
+                        cellData.textContent = "";
+                        cellData.className = "";
+                    }
+                })
+            })
+        };
+
+        let count = 0;
+        $button.addEventListener('click', () => {
+            if(count > 5){
+                return;
+            }
+            const prevData = history.pop();
+            if(!prevData){
+                return;
+            }
+            $score.textContent = prevData.score;
+            data = prevData.table;
+            console.log(data);
+            draw();
+            count++;
+            $button.textContent = `남은기회 : ${6 - count}`
+        })
+
+
+
+        gameStart();
+        console.log(data);
+
+        function moveCells(direction){
+            history.push({
+                score : $score.textContent,
+                table : JSON.parse(JSON.stringify(data)), // 깊은 참조.
+            });
+            switch (direction){
+                case 'left': {
+                    let moveData = [[],[],[],[]];
+                    data.forEach((rows, i) => {
+                        rows.forEach((cells, j) => {
+                            if(cells !== 0){
+                                const currentRow = moveData[i];
+                                const prevData = currentRow[currentRow.length - 1]
+                                if(cells === prevData){
+                                    const score = parseInt($score.textContent);
+                                    $score.textContent = score + currentRow[currentRow.length - 1] * 2;
+                                    currentRow[currentRow.length - 1] *= -2;
+                                }else{
+                                    moveData[i].push(cells);
+
+                                }
+                            }
+                        });
+                    });
+                    console.log(moveData);
+                    [1,2,3,4].forEach((row, i) => {
+                        [1,2,3,4].forEach((cell , j) => {
+                            data[i][j] = Math.abs(moveData[i][j]) || 0;
+                        })
+                    })
+                }
+                break;
+                case 'right': {
+                    let moveData = [[],[],[],[]];
+                    data.forEach((rows, i) => {
+                        rows.forEach((cells, j) => {
+                            if(rows[3-j] !== 0){
+                                const currentRow = moveData[i];
+                                const prevData = currentRow[currentRow.length - 1];
+                                if(prevData === rows[3 - j]){
+                                    const score = parseInt($score.textContent);
+                                    $score.textContent = score + currentRow[currentRow.length - 1] * 2;
+                                    currentRow[currentRow.length - 1] *= -2;
+                                }else{
+                                    moveData[i].push(rows[3 - j]);
+                                }
+                            }
+                        });
+                    });
+                    [1,2,3,4].forEach((row, i) => {
+                        [1,2,3,4].forEach((cell, j) => {
+                            data[i][3 - j] = Math.abs(moveData[i][j]) || 0;
+                        })
+                    })
+                }
+                break;
+                case 'up': {
+                    let moveData = [[], [], [], []];
+                    data.forEach((rows, i) => {
+                        rows.forEach((cell, j) => {
+                            if(cell !== 0){
+                                const currentRow = moveData[j];
+                                const prevData = currentRow[currentRow.length - 1];
+                                if(cell === prevData){
+                                    const score = parseInt($score.textContent);
+                                    $score.textContent = score + currentRow[currentRow.length - 1] * 2;
+                                    currentRow[currentRow.length - 1] *= -2;
+                                }else{
+                                    moveData[j].push(cell);
+                                }
+                            }
+                        });
+                    });
+                    console.log(moveData);
+                    [1,2,3,4].forEach((row, i) => {
+                        [1,2,3,4].forEach((cell, j) => {
+                            data[j][i] = Math.abs(moveData[i][j]) || 0;
+                        })
+                    })
+                }
+                break;
+                case 'down': {
+                    let moveData = [[],[],[],[]];
+                    data.forEach((row, i) => {
+                        row.forEach((cell, j) => {
+                            if(data[3-i][j] !== 0){
+                                const currentRow = moveData[j];
+                                const prevData = currentRow[currentRow.length - 1];
+                                if(data[3-i][j] === prevData){
+                                    const score = parseInt($score.textContent);
+                                    $score.textContent = score + currentRow[currentRow.length - 1] * 2;
+                                    currentRow[currentRow.length - 1] *= -2;
+                                }else{
+                                    moveData[j].push(data[3 - i][j]);
+                                }
+                            }
+                        });
+                    });
+                    [1,2,3,4].forEach((row , i) => {
+                        [1,2,3,4].forEach((cell, j) => {
+                            data[3 - j][i] = Math.abs(moveData[i][j]) || 0;
+                        })
+                    })
+                }
+                break;
+            }
+            if(!data.flat().includes(0)){
+                alert(`아쉽습니다. 게임오버입니다. ${$score.textContent}점에서 끝났습니다.`);
+                clickable = false;
+                return;
+            }else if(data.flat().includes(2048)){
+                clickable = false;
+                setTimeout(() => {
+                    alert(`대단합니다. 2048을 만들어서 게임 종료입니다. 총 스코어는 ${$score.textContent}입니다.`);
+                }, 100);
+                return;
+            }
+            put2ToRandomCell();
+            draw();
+        };
+
+        window.addEventListener('keyup', (event) => {
+            if(!clickable){
+                return;
+            }
+            if(event.key === 'ArrowUp'){
+                moveCells('up');
+            }else if(event.key === 'ArrowDown'){
+                moveCells('down');
+            }else if(event.key === 'ArrowLeft'){
+                moveCells('left');
+            }else if(event.key === 'ArrowRight'){
+                moveCells('right');
+            }
+        })
+
+        let startPoint;
+        window.addEventListener('mousedown', (event) => {
+            if(!clickable){
+                return;
+            }
+            startPoint = [event.clientX, event.clientY];
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            if(!clickable){
+                return;
+            }
+            let endPoint = [event.clientX, event.clientY];
+            let diffX = endPoint[0] - startPoint[0];
+            let diffY = endPoint[1] - startPoint[1];
+            console.log(endPoint);
+            if(diffX < 0 && Math.abs(diffX) > Math.abs(diffY)){
+                moveCells('left');
+            }else if(diffX < 0 && Math.abs(diffX) < Math.abs(diffY)){
+                moveCells('up');
+            }else if(diffX > 0 && Math.abs(diffX) > Math.abs(diffY)){
+                moveCells('right');
+            }else if(diffX > 0 && Math.abs(diffX) < Math.abs(diffY)){
+                moveCells('down');
+            }
+
+        });
+    </script>
+</body>
+</html>
